@@ -17,6 +17,9 @@ export const AuthProvider = ({ children }) => {
   const [userRole, setUserRole] = useState(localStorage.getItem('userRole'));
   const [loading, setLoading] = useState(true);
 
+  // Get API base URL from Vite environment variables
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   // Set up axios defaults
   useEffect(() => {
     if (token) {
@@ -31,13 +34,10 @@ export const AuthProvider = ({ children }) => {
     const checkAuth = async () => {
       if (token) {
         try {
-          const response = await axios.get('http://localhost:5000/profile');
+          const response = await axios.get(`${API_BASE_URL}/profile`);
           setUser(response.data);
-          // Set user role from localStorage if available
           const storedRole = localStorage.getItem('userRole');
-          if (storedRole) {
-            setUserRole(storedRole);
-          }
+          if (storedRole) setUserRole(storedRole);
         } catch (error) {
           console.error('Auth check failed:', error);
           logout();
@@ -51,22 +51,24 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       console.log('Attempting login with:', { email });
-      const response = await axios.post('http://localhost:5000/auth/login', {
+      const response = await axios.post(`${API_BASE_URL}/auth/login`, {
         email,
         password
       });
       console.log('Login response:', response.data);
+
       const { token: newToken, role } = response.data;
       setToken(newToken);
       setUserRole(role);
       localStorage.setItem('token', newToken);
       localStorage.setItem('userRole', role);
       axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-      
+
       // Fetch user profile
-      const profileResponse = await axios.get('http://localhost:5000/profile');
+      const profileResponse = await axios.get(`${API_BASE_URL}/profile`);
       console.log('Profile response:', profileResponse.data);
       setUser(profileResponse.data);
+
       return { success: true, role };
     } catch (error) {
       console.error('Login error:', error);
@@ -83,7 +85,7 @@ export const AuthProvider = ({ children }) => {
   const register = async (username, email, password, role) => {
     try {
       console.log('Attempting registration with:', { username, email, role });
-      const response = await axios.post('http://localhost:5000/auth/register', {
+      const response = await axios.post(`${API_BASE_URL}/auth/register`, {
         username,
         email,
         password,
@@ -111,7 +113,7 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfile = async (profileData) => {
     try {
-      const response = await axios.put('http://localhost:5000/profile', profileData);
+      const response = await axios.put(`${API_BASE_URL}/profile`, profileData);
       setUser(response.data);
       return { success: true };
     } catch (error) {
